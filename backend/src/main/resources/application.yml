@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: hackathon-buddy
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000/test?sslMode=VERIFY_IDENTITY}
+    username: ${SPRING_DATASOURCE_USERNAME:4HfiL5GrXTF1yhA.root}
+    password: ${SPRING_DATASOURCE_PASSWORD:L5MuaILLvqbXplME}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+
+
+server:
+  port: ${SERVER_PORT:8081}
+
+# ──────────────────────────────────────────────────
+# AI / Python ML Service
+# Spring Boot calls this URL — React NEVER calls it directly
+# ──────────────────────────────────────────────────
+ai:
+  service:
+    url: ${AI_SERVICE_URL:http://localhost:8000}
+
+# ──────────────────────────────────────────────────
+# CORS — only React dev server is allowed
+# ──────────────────────────────────────────────────
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+jwt:
+  secret: ${JWT_SECRET:YOUR_SUPER_SECRET_JWT_KEY_REPLACE_ME_IN_PRODUCTION}
+  expiration: 86400000 # 24 hours in ms
+
+logging:
+  level:
+    com.hackathonbuddy: INFO
+    com.hackathonbuddy.client: DEBUG  # log all AI service calls

@@ -1,0 +1,286 @@
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Trophy,
+  Users,
+  Brain,
+  FolderKanban,
+  MessageSquare,
+  Bell,
+  User,
+  ArrowLeft,
+  Search,
+  Menu,
+  X,
+  LogOut,
+  Sparkles,
+  ChevronDown
+} from "lucide-react";
+import { useApp } from "../context/AppContext";
+import "./Header.css";
+
+function Header() {
+  const { currentUser, notifications, logout } = useApp();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+
+  const unreadCount = notifications.filter((n) => n.unread).length;
+  const isDashboard = 
+    location.pathname === "/student/dashboard" || 
+    location.pathname === "/dashboard" ||
+    location.pathname === "/super-admin/dashboard" ||
+    location.pathname === "/admin/hackathons/dashboard" ||
+    location.pathname === "/admin/developers/dashboard" ||
+    location.pathname === "/admin";
+  const isAuthPage = location.pathname === "/" || location.pathname === "/login" || location.pathname === "/create-profile";
+
+  // Derive the user's role name (normalized to uppercase)
+  const userRole = (currentUser?.role || "STUDENT").toUpperCase().replace("ROLE_", "");
+
+  if (isAuthPage) {
+    return null;
+  }
+
+  const isStudentRole = ["STUDENT", "DEVELOPER", "ORGANIZER", "COMPANY"].includes(userRole);
+
+  const navItems = isStudentRole ? [
+    { label: "Dashboard", icon: LayoutDashboard, path: "/student/dashboard" },
+    { label: "Hackathons", icon: Trophy, path: "/hackathons" },
+    { label: "Teams", icon: Users, path: "/teams" },
+    { label: "AI Hub", icon: Brain, path: "/ai-hub" },
+    { label: "Projects", icon: FolderKanban, path: "/projects" },
+    { label: "Chat", icon: MessageSquare, path: "/chat" },
+    { label: "Notifications", icon: Bell, path: "/notifications", badge: unreadCount },
+    { label: "Profile", icon: User, path: "/profile" },
+  ] : [];
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  return (
+    <header className="sticky-header">
+      <div className="header-container">
+        {/* Brand & Left Actions */}
+        <div className="header-left-section">
+          <Link to="/dashboard" className="header-brand">
+            <div className="brand-icon-box">🚀</div>
+            <div className="brand-text">
+              HACKATHON<span>BUDDY</span>
+            </div>
+          </Link>
+        </div>
+
+        {/* Desktop Navigation */}
+        <nav className="desktop-nav">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`nav-item ${isActive ? "active" : ""}`}
+              >
+                <Icon size={17} />
+                <span>{item.label}</span>
+                {item.badge > 0 && <span className="nav-badge">{item.badge}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Right Actions */}
+        <div className="header-right-section">
+
+          {/* User Profile Pill */}
+          <div className="user-profile-menu">
+            <button
+              className="user-profile-btn"
+              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+              aria-label="User menu"
+            >
+              <div className="user-avatar-small">
+                {currentUser?.firstName?.charAt(0) || currentUser?.fullName?.charAt(0) || "U"}
+              </div>
+              <div className="user-text-info">
+                <span className="user-name-text">
+                  {currentUser?.firstName || currentUser?.fullName?.split(" ")[0] || "User"}
+                </span>
+                <span className="user-role-text">
+                  {currentUser?.primaryRole || currentUser?.role || "Developer"}
+                </span>
+              </div>
+              <ChevronDown size={14} className="dropdown-caret" />
+            </button>
+
+            {userDropdownOpen && (
+              <div
+                className="user-dropdown-card"
+                onMouseLeave={() => setUserDropdownOpen(false)}
+              >
+                <div className="dropdown-header">
+                  <strong>{currentUser?.fullName}</strong>
+                  <small>{currentUser?.email}</small>
+                </div>
+                <div className="dropdown-divider" />
+                <Link
+                  to="/profile"
+                  className="dropdown-item"
+                  onClick={() => setUserDropdownOpen(false)}
+                >
+                  <User size={16} />
+                  My Profile
+                </Link>
+                {!isStudentRole && (
+                  <Link
+                    to="/notifications"
+                    className="dropdown-item"
+                    onClick={() => setUserDropdownOpen(false)}
+                    style={{ justifyContent: "space-between" }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Bell size={16} />
+                      Notifications
+                    </div>
+                    {unreadCount > 0 && (
+                      <span style={{
+                        background: "#e11d48",
+                        color: "white",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                        padding: "2px 6px",
+                        borderRadius: "10px"
+                      }}>
+                        {unreadCount}
+                      </span>
+                    )}
+                  </Link>
+                )}
+                {isStudentRole && (
+                  <Link
+                    to="/student/dashboard"
+                    className="dropdown-item"
+                    onClick={() => setUserDropdownOpen(false)}
+                  >
+                    <LayoutDashboard size={16} />
+                    Dashboard
+                  </Link>
+                )}
+                {/* Show role-specific admin links */}
+                {(userRole === "SUPER_ADMIN" || userRole === "ADMIN" || userRole === "HACKATHON_ADMIN" || userRole === "DEVELOPER_ADMIN") && (
+                  <>
+                    {userRole === "SUPER_ADMIN" && (
+                      <Link
+                        to="/super-admin/dashboard"
+                        className="dropdown-item"
+                        onClick={() => setUserDropdownOpen(false)}
+                        style={{ color: "#e11d48" }}
+                      >
+                        <Sparkles size={16} />
+                        Super Admin Console
+                      </Link>
+                    )}
+                    {userRole === "HACKATHON_ADMIN" && (
+                      <Link
+                        to="/admin/hackathons/dashboard"
+                        className="dropdown-item"
+                        onClick={() => setUserDropdownOpen(false)}
+                        style={{ color: "#14b8a6" }}
+                      >
+                        <Sparkles size={16} />
+                        Hackathon Admin
+                      </Link>
+                    )}
+                    {userRole === "DEVELOPER_ADMIN" && (
+                      <Link
+                        to="/admin/developers/dashboard"
+                        className="dropdown-item"
+                        onClick={() => setUserDropdownOpen(false)}
+                        style={{ color: "#6366f1" }}
+                      >
+                        <Sparkles size={16} />
+                        Developer Admin
+                      </Link>
+                    )}
+                    {userRole === "ADMIN" && (
+                      <Link
+                        to="/admin"
+                        className="dropdown-item"
+                        onClick={() => setUserDropdownOpen(false)}
+                        style={{ color: "#38bdf8" }}
+                      >
+                        <Sparkles size={16} />
+                        Admin Console
+                      </Link>
+                    )}
+                  </>
+                )}
+                <div className="dropdown-divider" />
+                <button className="dropdown-item logout" onClick={handleLogout}>
+                  <LogOut size={16} />
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Hamburger Toggle */}
+          <button
+            className="mobile-toggle-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle navigation"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Drawer Menu */}
+      {mobileMenuOpen && (
+        <div className="mobile-drawer">
+          <div className="mobile-nav-list">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`mobile-nav-link ${isActive ? "active" : ""}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Icon size={20} />
+                  <span>{item.label}</span>
+                  {item.badge > 0 && <span className="nav-badge">{item.badge}</span>}
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="mobile-drawer-footer">
+            <div className="mobile-user-row">
+              <div className="user-avatar-small">
+                {currentUser?.firstName?.charAt(0) || "U"}
+              </div>
+              <div>
+                <strong>{currentUser?.fullName}</strong>
+                <small>{currentUser?.email}</small>
+              </div>
+            </div>
+            <button className="mobile-logout-btn" onClick={handleLogout}>
+              <LogOut size={16} />
+              Sign Out
+            </button>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}
+
+export default Header;
